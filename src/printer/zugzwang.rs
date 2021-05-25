@@ -1,5 +1,5 @@
 use super::core::*;
-use crate::zugzwang::{Game, PawnState, Id, Size};
+use crate::zugzwang::core::{Game, PawnState, Id, Size, Position};
 
 const ALPHA: &str = "abcdefghijklmnopqrstuvwxyz";
 
@@ -57,7 +57,7 @@ fn pawn_to_string(owner_id: Option<&Id>, pawn_id: Id) -> String {
 
 fn put_placed_pawns(game: &Game, board_canvas: &mut Canvas) {
     for pawn in game.placed_pawns() {
-        if let PawnState::Placed{x, y} = pawn.state {
+        if let PawnState::Placed(Position{x, y}) = pawn.state {
             let pawn_string = pawn_to_string(game.who_owns_pawn(pawn.id), pawn.id);
             board_canvas.put(((x*5)+2) as usize, ((y*2)+1) as usize, pawn_string);
             board_canvas.put(((x*5)+3) as usize, ((y*2)+1) as usize, "");
