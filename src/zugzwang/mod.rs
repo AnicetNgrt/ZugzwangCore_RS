@@ -89,12 +89,16 @@ impl Game {
         match (pawn.state, state) {
             (PawnState::Unplaced, PawnState::Unplaced) => Ok(()),
             (PawnState::Unplaced, PawnState::Placed{x, y}) => {
-                if self.is_position_free(x, y) {
-                    pawn.state = state;
-                    Ok(())
-                } else {
-                    Err(RulesError::PositionTaken)
+                if !self.is_position_ofb(x, y) {
+                    let (x, y) = self.position_pacman(x, y);
+                    pawn.state = PawnState::Placed{ x, y };
+                    return Ok(());
                 }
+                if !self.is_position_free(x, y) {
+                    return Err(RulesError::PositionTaken);
+                }
+                pawn.state = state;
+                Ok(())
             },
             _ => Err(RulesError::IllegalStateTransition)
         }
@@ -120,6 +124,14 @@ impl Game {
 
     fn give_pawn(&mut self, player_id: Id, pawn: Pawn) {
         self.pawns_ownerships.insert(pawn.id, player_id);
+    }
+
+    fn is_position_ofb(&self, x: Size, y: Size) -> bool {
+        x < self.width && y < self.height
+    }
+
+    fn position_pacman(&self, x: Size, y: Size) -> (Size, Size) {
+        (x % self.width, y % self.height)
     }
 
     fn is_position_free(&self, x: Size, y: Size) -> bool {
