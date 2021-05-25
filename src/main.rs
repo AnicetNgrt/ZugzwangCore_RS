@@ -22,4 +22,6 @@ fn main() {
     game.create_pawns_from(pawns.iter()).unwrap();
 
     print_game(&game);
+
+    loop {}
 }

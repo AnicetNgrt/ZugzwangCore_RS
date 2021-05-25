@@ -1,4 +1,5 @@
 use std::fmt;
+use std::cmp;
 use std::vec::Vec;
 use unicode_width::UnicodeWidthChar;
 
@@ -14,7 +15,7 @@ impl fmt::Display for Canvas {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut string = String::new();
 
-        let canvas = self.add_borders();
+        let canvas = self;
 
         string += "\n";
         for line in canvas.grid.iter() {
@@ -40,11 +41,7 @@ impl Canvas {
             grid.push(line);
         }
 
-        Canvas {
-            grid: grid,
-            width: width,
-            height: height,
-        }
+        Canvas { grid, width, height }
     }
 
     pub fn put<S: ToString>(&mut self, x: usize, y: usize, s: S) {
@@ -55,15 +52,13 @@ impl Canvas {
         }
 
         for shift in 1..screen_width {
-            self.grid[y][x+shift] = "".to_owned();
+            self.grid[y][x+shift] = empty();
         }
     }
 
     pub fn put_splitted<S: ToString>(&mut self, x: usize, y: usize, s: S) {
-        let mut count = 0;
-        for c in s.to_string().chars() {
-            self.put(x+count, y, String::from(c));
-            count += 1;
+        for (count, ch)  in s.to_string().chars().enumerate() {
+            self.put(x+count, y, String::from(ch));
         }
     }
 
@@ -71,41 +66,41 @@ impl Canvas {
         self.grid[y][x].to_owned()
     }
 
-    pub fn sanitize(&mut self) {
-        for y in 0..self.grid.len() {
-            let line = &self.grid[y];
-            let mut screen_width = 0;
-            for string in line.iter() {
-                for c in string.chars() {
-                    screen_width += UnicodeWidthChar::width(c).unwrap_or(1);
-                }
-            }
-            let cell_count = line.len();
-            let mut x = 0;
-            while cell_count + x < screen_width {
-                self.put(cell_count - 1 - x, y, empty());
-                x += 1;
-            }
-        }
-    }
+    // pub fn sanitize(&mut self) {
+    //     for y in 0..self.grid.len() {
+    //         let line = &self.grid[y];
+    //         let mut screen_width = 0;
+    //         for string in line.iter() {
+    //             for c in string.chars() {
+    //                 screen_width += UnicodeWidthChar::width(c).unwrap_or(1);
+    //             }
+    //         }
+    //         let cell_count = line.len();
+    //         let mut x = 0;
+    //         while cell_count + x < screen_width {
+    //             self.put(cell_count - 1 - x, y, empty());
+    //             x += 1;
+    //         }
+    //     }
+    // }
 
     pub fn add_borders(&self) -> Self {
         let mut canvas = self.add_padding(1, 1, 1, 1);
         
         for x in 1..canvas.width-1 {
-            canvas.put(x, 0, "-");
+            canvas.put(x, 0, "─");
         }
         for y in 1..canvas.height-1 {
-            canvas.put(0, y, "|");
-            canvas.put(canvas.width-1, y, "|");
+            canvas.put(0, y, "│");
+            canvas.put(canvas.width-1, y, "│");
         }
         for x in 1..canvas.width-1 {
-            canvas.put(x, canvas.height-1, "-");
+            canvas.put(x, canvas.height-1, "─");
         }
-        canvas.put(0, 0, ",");
-        canvas.put(canvas.width-1, 0, ",");
-        canvas.put(0, canvas.height-1, "\\");
-        canvas.put(canvas.width-1, canvas.height-1, "/");
+        canvas.put(0, 0, "┌");
+        canvas.put(canvas.width-1, 0, "┐");
+        canvas.put(0, canvas.height-1, "└");
+        canvas.put(canvas.width-1, canvas.height-1, "┘");
 
         canvas
     }
@@ -122,6 +117,26 @@ impl Canvas {
                 self.put(x + left, y + top, canvas.get(x, y));
             }
         }
+    }
+
+    pub fn add_right(&self, right: &Canvas) -> Self {
+        let mut canvas = Canvas::new(
+            self.width+right.width,
+            cmp::max(self.height, right.height)
+        );
+        canvas.stamp(self, 0, 0);
+        canvas.stamp(right, self.width, 0);
+        canvas
+    }
+
+    pub fn add_bottom(&self, bottom: &Canvas) -> Self {
+        let mut canvas = Canvas::new(
+            cmp::max(self.width, bottom.width),
+            self.height+bottom.height,
+        );
+        canvas.stamp(self, 0, 0);
+        canvas.stamp(bottom, 0, self.height);
+        canvas
     }
 }
 

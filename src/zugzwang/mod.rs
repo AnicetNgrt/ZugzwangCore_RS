@@ -39,8 +39,8 @@ impl Game {
         height: Size
     ) -> Self {
         Game {
-            width: width,
-            height: height,
+            width,
+            height,
             pawns: vec![],
             pawns_ownerships: HashMap::new()
         }
@@ -51,17 +51,19 @@ impl Game {
         I: Iterator<Item=&'a(Id, PawnState)>
     {
         for tuple in tuples {
-            match self.create_pawn_for_player(tuple.0, tuple.1) {
-                Err(err) => return Err(err),
-                _ => ()
-            };
+            if let Err(err) = self.create_pawn_for_player(tuple.0, tuple.1) {
+                return Err(err);
+            }
         }
         Ok(())
     }
 
     pub fn create_pawn_for_player(&mut self, player_id: Id, state: PawnState) -> Result<(), RulesError> {
         match self.create_pawn(state) {
-            Ok(pawn) => Ok(self.give_pawn(player_id, pawn)),
+            Ok(pawn) => {
+                self.give_pawn(player_id, pawn);
+                Ok(())
+            },
             Err(err) => Err(err),
         }
     }
@@ -141,6 +143,6 @@ impl Game {
 
 impl Pawn {
     fn new(id: Id, state: PawnState) -> Self {
-        Pawn { id: id, state: state }
+        Pawn { id, state }
     }
 }
