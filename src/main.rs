@@ -1,7 +1,7 @@
 mod printer;
 mod zugzwang;
 
-use crate::zugzwang::core::*;
+use crate::zugzwang::{Game, PawnState, Position};
 use crate::printer::zugzwang::*;
 
 fn main() {

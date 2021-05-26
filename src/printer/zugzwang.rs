@@ -1,5 +1,5 @@
-use super::core::*;
-use crate::zugzwang::core::{Game, PawnState, Id, Size, Position};
+use super::{Drawable, Canvas};
+use crate::zugzwang::{Game, PawnState, Id, Size, Position};
 
 const ALPHA: &str = "abcdefghijklmnopqrstuvwxyz";
 

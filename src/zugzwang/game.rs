@@ -1,27 +1,14 @@
 use std::convert::TryFrom;
 use std::collections::HashMap;
 
-pub type Pawns = Vec<Pawn>;
-pub type Size = u8;
-pub type Id = u8;
+use super::{Pawn, Pawns, PawnState, Id, Size, Position};
 
 pub struct Game {
     pub height: Size,
     pub width: Size,
     pub pawns: Pawns,
-    pub pawns_ownerships: HashMap<Id, Id>
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum PawnState {
-    Placed(Position),
-    Unplaced
-}
-
-#[derive(Copy, Clone)]
-pub struct Pawn {
-    pub id: Id,
-    pub state: PawnState
+    pub pawns_ownerships: HashMap<Id, Id>,
+    pub players_ap: HashMap<Id, u8>
 }
 
 #[derive(Debug)]
@@ -30,10 +17,9 @@ pub enum RulesError {
     IllegalStateTransition
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct Position {
-    pub x: Size,
-    pub y: Size
+pub trait Action {
+    fn cost(&self) -> u8;
+    fn can_play(&self, game: &Game, player_id: Id) -> bool;
 }
 
 impl Game {
@@ -45,7 +31,8 @@ impl Game {
             width,
             height,
             pawns: vec![],
-            pawns_ownerships: HashMap::new()
+            pawns_ownerships: HashMap::new(),
+            players_ap: HashMap::new()
         }
     }
 
@@ -153,11 +140,5 @@ impl Game {
 
     fn gen_pawn_id(&self) -> Id {
         Id::try_from(self.pawns.len()).unwrap()
-    }
-}
-
-impl Pawn {
-    fn new(id: Id, state: PawnState) -> Self {
-        Pawn { id, state }
     }
 }
