@@ -1,10 +1,10 @@
-use super::{Position, Id};
+use super::{Pacman, Id};
 
 pub type Pawns = Vec<Pawn>;
 
 #[derive(Copy, Clone, Debug)]
 pub enum PawnState {
-    Placed(Position),
+    Placed(Pacman),
     Unplaced
 }
 

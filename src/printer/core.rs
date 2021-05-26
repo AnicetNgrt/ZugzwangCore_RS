@@ -66,24 +66,6 @@ impl Canvas {
         self.grid[y][x].to_owned()
     }
 
-    // pub fn sanitize(&mut self) {
-    //     for y in 0..self.grid.len() {
-    //         let line = &self.grid[y];
-    //         let mut screen_width = 0;
-    //         for string in line.iter() {
-    //             for c in string.chars() {
-    //                 screen_width += UnicodeWidthChar::width(c).unwrap_or(1);
-    //             }
-    //         }
-    //         let cell_count = line.len();
-    //         let mut x = 0;
-    //         while cell_count + x < screen_width {
-    //             self.put(cell_count - 1 - x, y, empty());
-    //             x += 1;
-    //         }
-    //     }
-    // }
-
     pub fn add_borders(&self) -> Self {
         let mut canvas = self.add_padding(1, 1, 1, 1);
         

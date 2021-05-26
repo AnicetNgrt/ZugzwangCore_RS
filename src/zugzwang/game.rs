@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::collections::HashMap;
 
-use super::{Pawn, Pawns, PawnState, Id, Size, Position};
+use super::{Pawn, Pawns, PawnState, Id, Size, Pacman};
 
 pub struct Game {
     pub height: Size,
@@ -34,6 +34,10 @@ impl Game {
             pawns_ownerships: HashMap::new(),
             players_ap: HashMap::new()
         }
+    }
+
+    pub fn new_pacman(&self, x: Size, y: Size) -> Pacman {
+        Pacman::new(x, y, self.width, self.height)
     }
 
     pub fn create_pawns_from<'a, I>(&mut self, tuples: I) -> Result<(), RulesError>
@@ -78,13 +82,12 @@ impl Game {
     fn set_state(&self, pawn: &mut Pawn, state: PawnState) -> Result<(), RulesError> {
         match (pawn.state, state) {
             (PawnState::Unplaced, PawnState::Unplaced) => Ok(()),
-            (PawnState::Unplaced, PawnState::Placed(Position{ x, y })) => {
-                if !self.is_position_ofb(x, y) {
-                    let (x, y) = self.position_pacman(x, y);
-                    pawn.state = PawnState::Placed(Position{ x, y });
+            (PawnState::Unplaced, PawnState::Placed(position)) => {
+                if !self.is_position_ofb(&position) {
+                    pawn.state = PawnState::Placed(position);
                     return Ok(());
                 }
-                if !self.is_position_free(x, y) {
+                if !self.is_position_free(&position) {
                     return Err(RulesError::PositionTaken);
                 }
                 pawn.state = state;
@@ -116,19 +119,16 @@ impl Game {
         self.pawns_ownerships.insert(pawn.id, player_id);
     }
 
-    fn is_position_ofb(&self, x: Size, y: Size) -> bool {
-        x < self.width && y < self.height
+    fn is_position_ofb(&self, position: &Pacman) -> bool {
+        position.x < self.width && position.y < self.height
     }
 
-    fn position_pacman(&self, x: Size, y: Size) -> (Size, Size) {
-        (x % self.width, y % self.height)
-    }
-
-    fn is_position_free(&self, x: Size, y: Size) -> bool {
+    fn is_position_free(&self, position: &Pacman) -> bool {
         let mut found = false;
         for p in self.pawns.iter() {
             found = match p.state {
-                PawnState::Placed(Position{x: xb, y: yb}) => xb == x && yb == y,
+                PawnState::Placed(pawn_position) => 
+                    position.equals(pawn_position),
                 _ => false
             };
             if found {
@@ -142,3 +142,6 @@ impl Game {
         Id::try_from(self.pawns.len()).unwrap()
     }
 }
+
+#[cfg(test)]
+mod tests {}
