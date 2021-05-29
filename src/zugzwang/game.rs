@@ -1,82 +1,31 @@
 use std::convert::TryFrom;
 use std::collections::HashMap;
 
-use super::{Pawn, Pawns, PawnState, Id, Size, Pacman};
+use super::{Pawn, Pawns, PawnState, Id, Size, Pacman, RulesError};
 
-pub struct Game {
+pub struct GameSettings {
     pub height: Size,
     pub width: Size,
+    pub max_pawn_per_player: usize
+}
+
+pub struct Game<'a> {
+    pub settings: &'a GameSettings,
     pub pawns: Pawns,
-    pub pawns_ownerships: HashMap<Id, Id>,
     pub players_ap: HashMap<Id, u8>
 }
 
-#[derive(Debug)]
-pub enum RulesError {
-    PositionTaken,
-    IllegalStateTransition
-}
-
-pub trait Action {
-    fn cost(&self) -> u8;
-    fn can_play(&self, game: &Game, player_id: Id) -> bool;
-}
-
-impl Game {
-    pub fn new(
-        width: Size, 
-        height: Size
-    ) -> Self {
+impl<'a> Game<'a> {
+    pub fn new(settings: &'a GameSettings) -> Self {
         Game {
-            width,
-            height,
-            pawns: vec![],
-            pawns_ownerships: HashMap::new(),
+            settings: settings,
+            pawns: HashMap::new(),
             players_ap: HashMap::new()
         }
     }
 
     pub fn new_pacman(&self, x: Size, y: Size) -> Pacman {
-        Pacman::new(x, y, self.width, self.height)
-    }
-
-    pub fn create_pawns_from<'a, I>(&mut self, tuples: I) -> Result<(), RulesError>
-    where 
-        I: Iterator<Item=&'a(Id, PawnState)>
-    {
-        for tuple in tuples {
-            if let Err(err) = self.create_pawn_for_player(tuple.0, tuple.1) {
-                return Err(err);
-            }
-        }
-        Ok(())
-    }
-
-    pub fn create_pawn_for_player(&mut self, player_id: Id, state: PawnState) -> Result<(), RulesError> {
-        match self.create_pawn(state) {
-            Ok(pawn) => {
-                self.give_pawn(player_id, pawn);
-                Ok(())
-            },
-            Err(err) => Err(err),
-        }
-    }
-
-    fn create_pawn(&mut self, state: PawnState) -> Result<Pawn, RulesError> {
-        let id = self.gen_pawn_id();
-
-        let mut pawn = Pawn::new(
-            id,
-            PawnState::Unplaced
-        );
-
-        match self.set_state(&mut pawn, state) {
-            Ok(()) => {
-                self.pawns.push(pawn);
-                Ok(pawn)
-            },
-            Err(err) => Err(err)
-        }
+        Pacman::new(x, y, self.settings.width, self.settings.height)
     }
 
     fn set_state(&self, pawn: &mut Pawn, state: PawnState) -> Result<(), RulesError> {
@@ -98,34 +47,56 @@ impl Game {
     }
 
     pub fn placed_pawns(&self) -> impl Iterator<Item = &Pawn> {
-        self.pawns.iter()
+        self.pawns.values()
             .filter(
                 |&pawn| matches!(pawn.state, PawnState::Placed(_))
             )
     }
 
     pub fn unplaced_pawns(&self) -> impl Iterator<Item = &Pawn> {
-        self.pawns.iter()
+        self.pawns.values()
             .filter(
                 |&pawn| matches!(pawn.state, PawnState::Unplaced)
             )
     }
 
-    pub fn who_owns_pawn(&self, pawn_id: Id) -> Option<&Id> {
-        self.pawns_ownerships.get(&pawn_id)
+    pub fn who_owns_pawn(&self, pawn_id: Id) -> Option<Id> {
+        match self.pawns.get(&pawn_id) {
+            Some(pawn) => pawn.owner_id,
+            _err => None
+        }
     }
 
-    fn give_pawn(&mut self, player_id: Id, pawn: Pawn) {
-        self.pawns_ownerships.insert(pawn.id, player_id);
+    pub fn player_pawns(&self, player_id: Id) -> impl Iterator<Item = &Pawn> {
+        self.pawns.values()
+            .filter(move |&pawn| {
+                if let Some(id) = pawn.owner_id {
+                    id == player_id
+                } else {
+                    false
+                }
+            })
+    }
+
+    pub fn player_pawn_count(&self, player_id: Id) -> usize {
+        self.player_pawns(player_id).count()
+    }
+
+    pub fn get_pawn_mut(&mut self, pawn_id: Id) -> Option<&mut Pawn> {
+        self.pawns.get_mut(&pawn_id)
+    }
+
+    fn give_pawn(&mut self, player_id: Id, pawn: &mut Pawn) {
+        pawn.owner_id = Some(player_id);
     }
 
     fn is_position_ofb(&self, position: &Pacman) -> bool {
-        position.x < self.width && position.y < self.height
+        position.x < self.settings.width && position.y < self.settings.height
     }
 
     fn is_position_free(&self, position: &Pacman) -> bool {
         let mut found = false;
-        for p in self.pawns.iter() {
+        for p in self.pawns.values() {
             found = match p.state {
                 PawnState::Placed(pawn_position) => 
                     position.equals(pawn_position),
@@ -138,8 +109,8 @@ impl Game {
         !found
     }
 
-    fn gen_pawn_id(&self) -> Id {
-        Id::try_from(self.pawns.len()).unwrap()
+    pub fn gen_pawn_id(&self) -> Id {
+        Id::try_from(self.pawns.values().count()).unwrap()
     }
 }
 

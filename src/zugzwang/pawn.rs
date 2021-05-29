@@ -1,6 +1,8 @@
 use super::{Pacman, Id};
 
-pub type Pawns = Vec<Pawn>;
+use std::collections::HashMap;
+
+pub type Pawns = HashMap<Id, Pawn>;
 
 #[derive(Copy, Clone, Debug)]
 pub enum PawnState {
@@ -8,14 +10,15 @@ pub enum PawnState {
     Unplaced
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Pawn {
     pub id: Id,
-    pub state: PawnState
+    pub state: PawnState,
+    pub owner_id: Option<Id>
 }
 
 impl Pawn {
     pub fn new(id: Id, state: PawnState) -> Self {
-        Pawn { id, state }
+        Pawn { id, state, owner_id: None }
     }
 }

@@ -3,25 +3,28 @@ use crate::zugzwang::{Game, PawnState, Id, Size, Pacman};
 
 const ALPHA: &str = "abcdefghijklmnopqrstuvwxyz";
 
-pub fn print_game(game: &Game) {
+pub fn print_game<'a>(game: &Game<'a>) {
     println!(" ZUGZWANG ♟{}", game.to_canvas())
 }
 
-impl Drawable for Game {
+impl<'a> Drawable for Game<'a> {
     fn to_canvas(&self) -> Canvas {
         board(self)
     }
 }
 
 fn board_body(game: &Game, show_coords: bool) -> Canvas {
+    let width = game.settings.width;
+    let height = game.settings.height;
+
     let mut canvas = Canvas::new(
-        usize::from((game.width*5)+1),
-        usize::from((game.height*2)+1)
+        usize::from((width*5)+1),
+        usize::from((height*2)+1)
     );
-    for y in 0..game.height {
-        for x in 0..game.width {
+    for y in 0..height {
+        for x in 0..width {
             canvas.stamp(
-                &board_cell(x, y, game.width, game.height, show_coords), 
+                &board_cell(x, y, width, height, show_coords), 
                 usize::from(x*5), 
                 usize::from(y*2)
             );
@@ -31,7 +34,7 @@ fn board_body(game: &Game, show_coords: bool) -> Canvas {
     canvas
 }
 
-fn pawn_to_string(owner_id: Option<&Id>, pawn_id: Id) -> String {
+fn pawn_to_string(owner_id: Option<Id>, pawn_id: Id) -> String {
     match owner_id {
         Some(owner_id) => {
             let pawns = vec![
@@ -49,7 +52,7 @@ fn pawn_to_string(owner_id: Option<&Id>, pawn_id: Id) -> String {
                 ]
             ];
 
-            pawns[*owner_id as usize][pawn_id as usize].to_owned()
+            pawns[owner_id as usize][pawn_id as usize].to_owned()
         },
         None => "😎".to_owned()
     }
@@ -128,13 +131,13 @@ fn player_unplaced_pawns(game: &Game, player_id: Id) -> Canvas {
 
     let pawns_iterator = game.unplaced_pawns()
         .filter(|&pawn| match game.who_owns_pawn(pawn.id) {
-            Some(id) => *id == player_id,
+            Some(id) => id == player_id,
             _ => false
         });
 
     for pawn in pawns_iterator {
         let mut pawn_canvas = Canvas::new(2, 1);
-        pawn_canvas.put(0, 0, pawn_to_string(Some(&player_id), pawn.id));
+        pawn_canvas.put(0, 0, pawn_to_string(Some(player_id), pawn.id));
         pawn_canvas.put(1, 0, "");
         canvas = canvas.add_right(&pawn_canvas).add_padding(0, 1, 0, 0);
     }
