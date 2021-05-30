@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{Pawn, PawnState, Id, Size, Pacman, RulesError, Player, Brain, Action};
+use super::{Pawn, PawnState, Id, Size, Pacman, Player, Action};
 use super::actions::{CreateGivePawn};
 
 pub struct GameSettings {
@@ -68,20 +68,6 @@ impl<'a> Game<'a> {
         Pacman::new(x, y, self.settings.width, self.settings.height)
     }
 
-    fn set_state(&self, pawn: &mut Pawn, state: PawnState) -> Result<(), RulesError> {
-        match (pawn.state, state) {
-            (PawnState::Unplaced, PawnState::Unplaced) => Ok(()),
-            (PawnState::Unplaced, PawnState::Placed(position)) => {
-                if !self.is_position_free(&position) {
-                    return Err(RulesError::PositionTaken);
-                }
-                pawn.state = state;
-                Ok(())
-            },
-            _ => Err(RulesError::IllegalStateTransition)
-        }
-    }
-
     pub fn placed_pawns(&self) -> impl Iterator<Item = &Pawn> {
         self.pawns.values()
             .filter(
@@ -120,10 +106,6 @@ impl<'a> Game<'a> {
 
     pub fn get_pawn_mut(&mut self, pawn_id: Id) -> Option<&mut Pawn> {
         self.pawns.get_mut(&pawn_id)
-    }
-
-    fn give_pawn(&mut self, player_id: Id, pawn: &mut Pawn) {
-        pawn.owner_id = Some(player_id);
     }
 
     pub fn is_position_free(&self, position: &Pacman) -> bool {

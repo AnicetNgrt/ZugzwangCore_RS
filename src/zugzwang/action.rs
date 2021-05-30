@@ -5,8 +5,7 @@ pub enum RulesError {
     PositionTaken,
     IllegalStateTransition,
     PawnNotExists,
-    MaximumPawnCount,
-    MinimumPawnCount
+    MaximumPawnCount
 }
 
 pub trait Action {
