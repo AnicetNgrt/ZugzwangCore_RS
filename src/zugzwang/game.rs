@@ -77,10 +77,6 @@ impl<'a> Game<'a> {
         match (pawn.state, state) {
             (PawnState::Unplaced, PawnState::Unplaced) => Ok(()),
             (PawnState::Unplaced, PawnState::Placed(position)) => {
-                if !self.is_position_ofb(&position) {
-                    pawn.state = PawnState::Placed(position);
-                    return Ok(());
-                }
                 if !self.is_position_free(&position) {
                     return Err(RulesError::PositionTaken);
                 }
@@ -133,10 +129,6 @@ impl<'a> Game<'a> {
 
     fn give_pawn(&mut self, player_id: Id, pawn: &mut Pawn) {
         pawn.owner_id = Some(player_id);
-    }
-
-    fn is_position_ofb(&self, position: &Pacman) -> bool {
-        position.x < self.settings.width && position.y < self.settings.height
     }
 
     fn is_position_free(&self, position: &Pacman) -> bool {
