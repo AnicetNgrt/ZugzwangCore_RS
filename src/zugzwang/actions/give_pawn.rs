@@ -31,20 +31,12 @@ impl Action for GivePawn {
         }
     }
 
-    fn unplay(&mut self, game: &mut Game) -> Result<(), RulesError> {
+    fn unplay(&mut self, game: &mut Game) {
         if let Some(player_id) = self.previous_owner {
-            GivePawn::new(player_id, self.player_id).play(game)
+            let _ = GivePawn::new(player_id, self.player_id).play(game);
         } else {
-            if game.player_pawn_count(self.player_id) <= 0 {
-                Err(RulesError::MinimumPawnCount)
-            } else {
-                match game.get_pawn_mut(self.pawn_id) {
-                    Some(pawn) => {
-                        pawn.owner_id = self.previous_owner;
-                        Ok(())
-                    },
-                    None => Err(RulesError::PawnNotExists)
-                }
+            if let Some(pawn) = game.get_pawn_mut(self.pawn_id) {
+                pawn.owner_id = self.previous_owner;
             }
         }
     }

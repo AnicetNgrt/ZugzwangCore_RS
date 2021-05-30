@@ -11,5 +11,5 @@ pub enum RulesError {
 
 pub trait Action {
     fn play(&mut self, game: &mut Game) -> Result<(), RulesError>;
-    fn unplay(&mut self, game: &mut Game) -> Result<(), RulesError>;
+    fn unplay(&mut self, game: &mut Game);
 }

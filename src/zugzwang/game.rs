@@ -1,27 +1,72 @@
-use std::convert::TryFrom;
 use std::collections::HashMap;
 
-use super::{Pawn, Pawns, PawnState, Id, Size, Pacman, RulesError};
+use super::{Pawn, PawnState, Id, Size, Pacman, RulesError, Player, Brain, Action};
+use super::actions::{CreateGivePawn};
 
 pub struct GameSettings {
     pub height: Size,
     pub width: Size,
+    pub player_count: usize,
+    pub end_turn_ap_gain: u8,
+    pub max_ap_per_player: u8,
+    pub start_pawn_per_player: usize,
     pub max_pawn_per_player: usize
 }
 
 pub struct Game<'a> {
+    pub turn: u8,
     pub settings: &'a GameSettings,
-    pub pawns: Pawns,
-    pub players_ap: HashMap<Id, u8>
+    pub pawns: HashMap<Id, Pawn>,
+    pub players: HashMap<Id, Player>
 }
 
 impl<'a> Game<'a> {
     pub fn new(settings: &'a GameSettings) -> Self {
         Game {
+            turn: 0,
             settings: settings,
             pawns: HashMap::new(),
-            players_ap: HashMap::new()
+            players: HashMap::new()
         }
+    }
+
+    pub fn play_turn(&mut self, brains: &mut HashMap<Id, Box<dyn Brain>>) {
+        self.before_turn();
+        for player in self.players.values() {
+            let brain = brains.get_mut(&player.id).unwrap();
+            brain.play(self);
+        }
+        self.turn += 1;
+    }
+
+    fn before_turn(&mut self) {
+        if self.turn == 0 {
+            self.first_turn_init_players();
+            self.first_turn_init_pawns();
+        }
+    }
+
+    fn first_turn_init_players(&mut self) {
+        for _ in 0..self.settings.player_count {
+            self.add_player();
+        }
+    }
+
+    fn first_turn_init_pawns(&mut self) {
+        for player_id in self.get_player_ids() {
+            for _ in 0..self.settings.start_pawn_per_player {
+                CreateGivePawn::new(player_id).play(self).unwrap();
+            }
+        }
+    }
+
+    fn get_player_ids(&self) -> Vec<Id> {
+        self.players.keys().map(|&id| id).collect()
+    }
+
+    pub fn add_player(&mut self) {
+        let id = self.gen_player_id();
+        self.players.insert(id, Player { id, ap: 0 });
     }
 
     pub fn new_pacman(&self, x: Size, y: Size) -> Pacman {
@@ -110,7 +155,29 @@ impl<'a> Game<'a> {
     }
 
     pub fn gen_pawn_id(&self) -> Id {
-        Id::try_from(self.pawns.values().count()).unwrap()
+        let mut max: Option<Id> = None;
+        for pawn in self.pawns.values() {
+            match max {
+                None => max = Some(pawn.id),
+                Some(id) => if pawn.id > id {
+                    max = Some(pawn.id);
+                }
+            }
+        }
+        max.and_then(|id| Some(id+1)).unwrap_or(0)
+    }
+
+    pub fn gen_player_id(&self) -> Id {
+        let mut max: Option<Id> = None;
+        for player in self.players.values() {
+            match max {
+                None => max = Some(player.id),
+                Some(id) => if player.id > id {
+                    max = Some(player.id);
+                }
+            }
+        }
+        max.and_then(|id| Some(id+1)).unwrap_or(0)
     }
 }
 

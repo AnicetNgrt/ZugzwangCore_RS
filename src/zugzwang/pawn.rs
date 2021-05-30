@@ -1,9 +1,5 @@
 use super::{Pacman, Id};
 
-use std::collections::HashMap;
-
-pub type Pawns = HashMap<Id, Pawn>;
-
 #[derive(Copy, Clone, Debug)]
 pub enum PawnState {
     Placed(Pacman),

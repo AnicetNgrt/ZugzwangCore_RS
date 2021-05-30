@@ -1,5 +1,11 @@
-use super::{Game, Action};
+use super::{Game, Id, Action};
 
-pub trait Player {
-    fn play(&mut self, game: &Game, actions: Vec<Box<dyn Action>>) -> u64;
+#[derive(Debug)]
+pub struct Player {
+    pub ap: u8,
+    pub id: Id
+}
+
+pub trait Brain {
+    fn play(&mut self, game: &Game);
 }

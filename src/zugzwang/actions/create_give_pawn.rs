@@ -21,19 +21,22 @@ impl Action for CreateGivePawn {
     fn play(&mut self, game: &mut Game) -> Result<(), RulesError> {
         match self.create_pawn.play(game) {
             Ok(()) => {
-                self.give_pawn.pawn_id = self.create_pawn.pawn_id;
-                self.give_pawn.play(game)
+                if let Some(pawn_id) = self.create_pawn.pawn_id {
+                    self.give_pawn.pawn_id = pawn_id;
+                    self.give_pawn.play(game)
+                } else {
+                    Err(RulesError::PawnNotExists)
+                }
             },
             err => err
         }
     }
 
-    fn unplay(&mut self, game: &mut Game) -> Result<(), RulesError> {
+    fn unplay(&mut self, game: &mut Game) {
         match self.give_pawn.unplay(game) {
-            Ok(()) => {
+            _ => {
                 self.create_pawn.unplay(game)
-            },
-            err => err
+            }
         }
     }
 }

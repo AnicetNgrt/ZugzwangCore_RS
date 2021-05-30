@@ -34,34 +34,23 @@ fn board_body(game: &Game, show_coords: bool) -> Canvas {
     canvas
 }
 
-fn pawn_to_string(owner_id: Option<Id>, pawn_id: Id) -> String {
+fn pawn_to_string(owner_id: Option<Id>) -> String {
     match owner_id {
         Some(owner_id) => {
-            let pawns = vec![
-                vec![
-                    "🐢", "🐸", "🐍", "🐲",
-                    "🐊", "🦎", "👽", "🥦",
-                    "🥑", "🧶", "🎄", "🧩",
-                    "📗", "💚", "🟢", "🟩"
-                ],
-                vec![
-                    "🐠", "🦐", "🐙", "🦀",
-                    "🐜", "🦉", "🍘", "🥕",
-                    "🥭", "🧨", "🧧", "🎃",
-                    "🟧", "🟠", "🏓", "🏀"
-                ]
-            ];
-
-            pawns[owner_id as usize][pawn_id as usize].to_owned()
+            if owner_id == 0 {
+                "⚪".to_owned()
+            } else {
+                "⚫".to_owned()
+            }
         },
-        None => "😎".to_owned()
+        None => "🟢".to_owned()
     }
 }
 
 fn put_placed_pawns(game: &Game, board_canvas: &mut Canvas) {
     for pawn in game.placed_pawns() {
         if let PawnState::Placed(Pacman{x, y, ..}) = pawn.state {
-            let pawn_string = pawn_to_string(game.who_owns_pawn(pawn.id), pawn.id);
+            let pawn_string = pawn_to_string(game.who_owns_pawn(pawn.id));
             board_canvas.put(((x*5)+2) as usize, ((y*2)+1) as usize, pawn_string);
             board_canvas.put(((x*5)+3) as usize, ((y*2)+1) as usize, "");
         }
@@ -135,9 +124,9 @@ fn player_unplaced_pawns(game: &Game, player_id: Id) -> Canvas {
             _ => false
         });
 
-    for pawn in pawns_iterator {
+    for _ in pawns_iterator {
         let mut pawn_canvas = Canvas::new(2, 1);
-        pawn_canvas.put(0, 0, pawn_to_string(Some(player_id), pawn.id));
+        pawn_canvas.put(0, 0, pawn_to_string(Some(player_id)));
         pawn_canvas.put(1, 0, "");
         canvas = canvas.add_right(&pawn_canvas).add_padding(0, 1, 0, 0);
     }
