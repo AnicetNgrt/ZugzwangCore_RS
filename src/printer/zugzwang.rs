@@ -4,7 +4,7 @@ use crate::zugzwang::{Game, PawnState, Id, Size, Pacman};
 const ALPHA: &str = "abcdefghijklmnopqrstuvwxyz";
 
 pub fn print_game<'a>(game: &Game<'a>) {
-    println!(" ZUGZWANG ♟{}", game.to_canvas())
+    println!("{}", game.to_canvas())
 }
 
 impl<'a> Drawable for Game<'a> {

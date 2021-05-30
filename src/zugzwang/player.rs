@@ -7,5 +7,5 @@ pub struct Player {
 }
 
 pub trait Brain {
-    fn play(&mut self, game: &Game);
+    fn play(&mut self, game: &mut Game, player_id: Id);
 }

@@ -30,16 +30,11 @@ impl<'a> Game<'a> {
         }
     }
 
-    pub fn play_turn(&mut self, brains: &mut HashMap<Id, Box<dyn Brain>>) {
-        self.before_turn();
-        for player in self.players.values() {
-            let brain = brains.get_mut(&player.id).unwrap();
-            brain.play(self);
-        }
+    pub fn after_turn(&mut self) {
         self.turn += 1;
     }
 
-    fn before_turn(&mut self) {
+    pub fn before_turn(&mut self) {
         if self.turn == 0 {
             self.first_turn_init_players();
             self.first_turn_init_pawns();
@@ -60,7 +55,7 @@ impl<'a> Game<'a> {
         }
     }
 
-    fn get_player_ids(&self) -> Vec<Id> {
+    pub fn get_player_ids(&self) -> Vec<Id> {
         self.players.keys().map(|&id| id).collect()
     }
 
@@ -131,7 +126,7 @@ impl<'a> Game<'a> {
         pawn.owner_id = Some(player_id);
     }
 
-    fn is_position_free(&self, position: &Pacman) -> bool {
+    pub fn is_position_free(&self, position: &Pacman) -> bool {
         let mut found = false;
         for p in self.pawns.values() {
             found = match p.state {
