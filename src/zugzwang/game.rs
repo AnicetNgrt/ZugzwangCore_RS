@@ -17,7 +17,9 @@ pub struct Game<'a> {
     pub turn: u8,
     pub settings: &'a GameSettings,
     pub pawns: HashMap<Id, Pawn>,
-    pub players: HashMap<Id, Player>
+    pub players: HashMap<Id, Player>,
+    max_pawn_id: Id,
+    max_player_id: Id
 }
 
 impl<'a> Game<'a> {
@@ -26,7 +28,9 @@ impl<'a> Game<'a> {
             turn: 0,
             settings: settings,
             pawns: HashMap::new(),
-            players: HashMap::new()
+            players: HashMap::new(),
+            max_pawn_id: 0,
+            max_player_id: 0
         }
     }
 
@@ -123,30 +127,14 @@ impl<'a> Game<'a> {
         !found
     }
 
-    pub fn gen_pawn_id(&self) -> Id {
-        let mut max: Option<Id> = None;
-        for pawn in self.pawns.values() {
-            match max {
-                None => max = Some(pawn.id),
-                Some(id) => if pawn.id > id {
-                    max = Some(pawn.id);
-                }
-            }
-        }
-        max.and_then(|id| Some(id+1)).unwrap_or(0)
+    pub fn gen_pawn_id(&mut self) -> Id {
+        self.max_pawn_id += 1;
+        self.max_pawn_id - 1
     }
 
-    pub fn gen_player_id(&self) -> Id {
-        let mut max: Option<Id> = None;
-        for player in self.players.values() {
-            match max {
-                None => max = Some(player.id),
-                Some(id) => if player.id > id {
-                    max = Some(player.id);
-                }
-            }
-        }
-        max.and_then(|id| Some(id+1)).unwrap_or(0)
+    pub fn gen_player_id(&mut self) -> Id {
+        self.max_player_id += 1;
+        self.max_player_id - 1
     }
 }
 
